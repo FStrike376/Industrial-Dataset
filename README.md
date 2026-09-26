@@ -22,3 +22,4 @@ https://disk.yandex.ru/d/Uk1Lt-CmOnijEw
 - `failure_within_24h` — отказ в течение 24 часов (0/1)
 - `failure_type` — тип отказа (none, hydraulic, bearing, electrical, motor_overheat)
 - `estimated_repair_cost` — оценка стоимости ремонта
+
