@@ -1,8 +1,12 @@
 # Industrial-Dataset
-Синтетический набор данных для промышленного интернета вещей с 24 042 записями о станках с ЧПУ и сопутствующем оборудовании, предназначенный для предиктивного обслуживания, прогнозирования отказов, и оценки остаточного срока службы в производственных условиях.
 
-Датасет был найден на kaggle: https://www.kaggle.com/datasets/tatheerabbas/industrial-machine-predictive-maintenance
-Датасет доступен по ссылке: https://disk.yandex.ru/d/Uk1Lt-CmOnijEw
+Синтетический набор данных для промышленного интернета вещей с 24 042 записями о станках с ЧПУ и сопутствующем оборудовании, предназначенный для предиктивного обслуживания, прогнозирования отказов и оценки остаточного срока службы в производственных условиях.
+
+**Источник:** [Kaggle — Industrial Machine Predictive Maintenance](https://www.kaggle.com/datasets/tatheerabbas/industrial-machine-predictive-maintenance)
+
+**Размер файла:** 2.1 МБ
+
+[Скачать датасет (Яндекс.Диск)](https://disk.yandex.ru/d/Uk1Lt-CmOnijEw)
 
 ## Описание признаков
 
@@ -21,4 +25,3 @@
 - `failure_within_24h` — отказ в течение 24 часов (0/1)
 - `failure_type` — тип отказа (none, hydraulic, bearing, electrical, motor_overheat)
 - `estimated_repair_cost` — оценка стоимости ремонта
-
