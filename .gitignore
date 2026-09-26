@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Данные (чтобы случайно не залить датасет в репозиторий!)
+*.csv
+*.xlsx
+
+# VS Code
+.vscode/
