@@ -47,8 +47,6 @@
 
    pip install -r requirements.txt
 
-4. Скачайте датасет по ссылке выше и сохраните его локально.
+4. Запустите скрипт, передав путь к CSV-файлу аргументом:
 
-5. Запустите скрипт, передав путь к CSV-файлу аргументом:
-
-   python data_loader.py путь/к/predictive_maintenance_v3.csv
+   python data_loader.py
