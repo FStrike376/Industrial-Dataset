@@ -29,24 +29,27 @@
 ## Установка и запуск
 
 1. Клонируйте репозиторий:
-
+```
    git clone https://github.com/FStrike376/Industrial-Dataset.git
    cd Industrial-Dataset
-
+```
 2. Создайте виртуальное окружение и активируйте его:
-
+```
    python -m venv .venv
-
+```
    Windows:
+```
    .venv\Scripts\activate
-
+```
    Linux/macOS:
+```
    source .venv/bin/activate
-
+```
 3. Установите зависимости:
-
+```
    pip install -r requirements.txt
-
+```
 4. Запустите скрипт, передав путь к CSV-файлу аргументом:
-
+```
    python data_loader.py
+```
