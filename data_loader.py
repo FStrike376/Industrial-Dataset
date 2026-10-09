@@ -16,8 +16,10 @@ import requests
 # Публичная ссылка на файл (Яндекс.Диск)
 YANDEX_DISK_URL = "https://disk.yandex.ru/d/Uk1Lt-CmOnijEw"
 
-# Пути считаем относительно самого файла data_loader.py,
-# чтобы скрипт работал независимо от текущей рабочей директории
+# Таймаут для сетевых запросов (секунды)
+REQUEST_TIMEOUT = 30
+
+# Пути считаем относительно самого файла data_loader.py
 BASE_DIR = Path(__file__).resolve().parent
 LOCAL_FILE_NAME = BASE_DIR / "predictive_maintenance_v3.csv"
 PARQUET_FILE_NAME = BASE_DIR / "predictive_maintenance_v3.parquet"
@@ -32,12 +34,12 @@ def download_file(url: str, dest_path: Path) -> None:
     """
     api_url = "https://cloud-api.yandex.net/v1/disk/public/resources/download"
     params = {"public_key": url}
-    response = requests.get(api_url, params=params)
+    response = requests.get(api_url, params=params, timeout=REQUEST_TIMEOUT)
     response.raise_for_status()
     download_url = response.json()["href"]
 
     print(f"Скачиваем файл с {url}...")
-    with requests.get(download_url, stream=True) as r:
+    with requests.get(download_url, stream=True, timeout=REQUEST_TIMEOUT) as r:
         r.raise_for_status()
         with open(dest_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
@@ -82,16 +84,20 @@ def cast_types(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce").astype("float64")
 
     # --- целочисленные ---
-    df["machine_id"] = pd.to_numeric(df["machine_id"], errors="coerce").astype("int64")
+    # nullable Int64 — устойчиво к возможным пропускам
+    df["machine_id"] = pd.to_numeric(df["machine_id"], errors="coerce").astype("Int64")
+    df["estimated_repair_cost"] = pd.to_numeric(
+        df["estimated_repair_cost"], errors="coerce"
+    ).astype("Int64")
+
+    # --- целевая переменная ---
+    # failure_within_24h — бинарный таргет (0/1).
+    # Пропуски трактуем как 0
     df["failure_within_24h"] = (
         pd.to_numeric(df["failure_within_24h"], errors="coerce")
         .fillna(0)
         .astype("int8")
     )
-    # nullable Int64 — на случай пропусков в стоимости ремонта
-    df["estimated_repair_cost"] = pd.to_numeric(
-        df["estimated_repair_cost"], errors="coerce"
-    ).astype("Int64")
 
     # --- категориальные ---
     cat_cols = ["machine_type", "operating_mode", "failure_type"]
