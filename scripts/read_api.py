@@ -9,6 +9,9 @@ API-ключ не требуется, лимит ~10 000 запросов/сут
 Что собираем:
     почасовую погоду в нескольких городах за последние N дней.
 
+Время запрашиваем в UTC, чтобы разные города можно было сравнивать
+между собой по меткам времени.
+
 Результат:
     data/weather_hourly.parquet  (в .gitignore, в репо не попадает)
 """
@@ -45,14 +48,14 @@ HOURLY_VARS = [
 ]
 
 PAST_DAYS = 30
+# Прогноз не нужен: 1 — минимальное значение (0 не принимается API).
+FORECAST_DAYS = 1
+# Все города — в UTC, иначе сравнивать их по времени некорректно.
+TIMEZONE = "UTC"
+
 TIMEOUT = 20
 RETRIES = 3
-RETRY_PAUSE = 2.0
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "data"
-DATA_DIR.mkdir(exist_ok=True)
-OUT_PATH = DATA_DIR / "weather_hourly.parquet"
+RETRY_PAUSE = 2.0   # базовая пауза; растёт экспоненциально: 2, 4, 8 сек
 
 
 # ----------------------------------------------------------------------
@@ -62,17 +65,19 @@ def fetch_city(name: str, lat: float, lon: float) -> dict:
     """
     Один запрос к Open-Meteo для одного города.
 
-    :param name: название города
+    :param name: название города (для логов)
     :param lat: широта
     :param lon: долгота
     :return: JSON-ответ как dict
+    :raises RuntimeError: если все попытки исчерпаны
     """
     params = {
         "latitude": lat,
         "longitude": lon,
         "hourly": ",".join(HOURLY_VARS),
         "past_days": PAST_DAYS,
-        "timezone": "auto",
+        "forecast_days": FORECAST_DAYS,
+        "timezone": TIMEZONE,
     }
 
     last_exc: Exception | None = None
@@ -81,12 +86,14 @@ def fetch_city(name: str, lat: float, lon: float) -> dict:
             r = requests.get(API_URL, params=params, timeout=TIMEOUT)
             r.raise_for_status()
             return r.json()
-        except Exception as e:  # noqa: BLE001
+        except requests.RequestException as e:
             last_exc = e
             if attempt == RETRIES:
                 break
-            print(f"  [{name}] попытка {attempt} не удалась: {e}")
-            time.sleep(RETRY_PAUSE)
+            # экспоненциальный backoff: 2, 4, 8, ...
+            delay = RETRY_PAUSE * (2 ** (attempt - 1))
+            print(f"  [{name}] попытка {attempt} не удалась: {e} → пауза {delay:.0f}s")
+            time.sleep(delay)
 
     raise RuntimeError(f"Не удалось получить данные для {name}: {last_exc}")
 
@@ -130,13 +137,20 @@ def cast_types(df: pd.DataFrame) -> pd.DataFrame:
     - city → category
     - координаты и физические величины → float32
     - humidity → Int8 (nullable)
-    - is_day → int8 (бинарный флаг)
+    - is_day → Int8 (nullable)
     """
     df = df.copy()
 
-    df["time"] = pd.to_datetime(df["time"], errors="coerce")
+    # --- время: явно ns, чтобы не зависеть от разрешения pandas ---
+    df["time"] = pd.to_datetime(df["time"], errors="coerce").astype("datetime64[ns]")
+    n_bad_time = int(df["time"].isna().sum())
+    if n_bad_time:
+        print(f"  [!] {n_bad_time} некорректных меток времени → NaT")
+
+    # --- категориальный признак ---
     df["city"] = df["city"].astype("category")
 
+    # --- float32 ---
     float_cols = [
         "latitude", "longitude",
         "temperature_2m", "wind_speed_10m",
@@ -146,17 +160,18 @@ def cast_types(df: pd.DataFrame) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").astype("float32")
 
+    # --- Int8 (nullable) — влажность ---
     if "relative_humidity_2m" in df.columns:
         df["relative_humidity_2m"] = (
             pd.to_numeric(df["relative_humidity_2m"], errors="coerce")
             .astype("Int8")
         )
 
+    # --- Int8 (nullable) — флаг дня; пропуски остаются пропусками ---
     if "is_day" in df.columns:
         df["is_day"] = (
             pd.to_numeric(df["is_day"], errors="coerce")
-            .fillna(0)
-            .astype("int8")
+            .astype("Int8")
         )
 
     ordered = [
@@ -169,31 +184,48 @@ def cast_types(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ----------------------------------------------------------------------
+# Проверка качества
+# ----------------------------------------------------------------------
+def validate(df: pd.DataFrame) -> None:
+    """Печатает краткий отчёт о качестве датасета."""
+    print("\n=== Отчёт о качестве ===")
+    print(f"Строк:         {len(df)}")
+    print(f"Городов:       {df['city'].nunique()}")
+    print(f"Временной диапазон: {df['time'].min()} .. {df['time'].max()}")
+
+    print("\nПропуски по столбцам:")
+    na = df.isna().sum()
+    for col, cnt in na.items():
+        if cnt:
+            print(f"  {col:<24} {cnt} ({cnt / len(df) * 100:.2f}%)")
+    if not na.any():
+        print("  нет пропусков")
+
+    dup = df.duplicated(subset=["city", "time"]).sum()
+    print(f"\nДубликаты (city, time): {dup}")
+
+
+# ----------------------------------------------------------------------
 # main
 # ----------------------------------------------------------------------
 def main() -> None:
-    print(f"Open-Meteo: почасовая погода за последние {PAST_DAYS} дней\n")
+    print(f"Open-Meteo: почасовая погода за последние {PAST_DAYS} дней (UTC)\n")
 
     df = cast_types(build_dataframe())
 
     print("\nСобрано:", df.shape)
     print(df.dtypes)
 
-    df.to_parquet(OUT_PATH, index=False, engine="pyarrow")
-    print(f"\nParquet сохранён: {OUT_PATH}")
+    validate(df)
 
-    summary = (
-        df.groupby("city", observed=True)
-        .agg(
-            rows=("time", "size"),
-            t_min=("temperature_2m", "min"),
-            t_max=("temperature_2m", "max"),
-            wind_mean=("wind_speed_10m", "mean"),
-        )
-        .round(2)
-    )
-    print("\nСводка по городам:")
-    print(summary)
+    # Папку data/ создаём только в момент запуска — не при импорте модуля.
+    project_root = Path(__file__).resolve().parent.parent
+    data_dir = project_root / "data"
+    data_dir.mkdir(exist_ok=True)
+    out_path = data_dir / "weather_hourly.parquet"
+
+    df.to_parquet(out_path, index=False, engine="pyarrow")
+    print(f"\nParquet сохранён: {out_path}")
 
     print("\nПервые 10 строк:")
     print(df.head(10).to_string(index=False))
