@@ -58,7 +58,7 @@ python scripts/read_api.py
 
 ### Отчёт о качестве
 
-![summary.png](summary.png)!
+![summary.png](summary.png)
 
 ## Воспроизводимость
 
