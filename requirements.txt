@@ -3,3 +3,7 @@ requests>=2.31
 pyarrow>=15.0
 matplotlib>=3.8
 seaborn>=0.13
+plotly>=6.0
+kaleido>=1.0.0
+nbformat>=4.2.0
+ipython>=8.0

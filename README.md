@@ -10,46 +10,64 @@
 
 ## Описание признаков
 
-- `timestamp` — временная метка
-- `machine_id` — идентификатор станка
-- `machine_type` — тип оборудования (CNC, Pump, Compressor)
-- `vibration_rms` — среднеквадратичная вибрация
-- `temperature_motor` — температура двигателя
-- `current_phase_avg` — средний ток фазы
-- `pressure_level` — уровень давления
-- `rpm` — обороты в минуту
-- `operating_mode` — режим работы (idle, normal, peak)
-- `hours_since_maintenance` — часы с последнего обслуживания
-- `ambient_temp` — температура окружающей среды
-- `rul_hours` — остаточный ресурс в часах
-- `failure_within_24h` — отказ в течение 24 часов (0/1)
-- `failure_type` — тип отказа (none, hydraulic, bearing, electrical, motor_overheat)
-- `estimated_repair_cost` — оценка стоимости ремонта
+* `timestamp` — временная метка
+* `machine\\\_id` — идентификатор станка
+* `machine\\\_type` — тип оборудования (CNC, Pump, Compressor)
+* `vibration\\\_rms` — среднеквадратичная вибрация
+* `temperature\\\_motor` — температура двигателя
+* `current\\\_phase\\\_avg` — средний ток фазы
+* `pressure\\\_level` — уровень давления
+* `rpm` — обороты в минуту
+* `operating\\\_mode` — режим работы (idle, normal, peak)
+* `hours\\\_since\\\_maintenance` — часы с последнего обслуживания
+* `ambient\\\_temp` — температура окружающей среды
+* `rul\\\_hours` — остаточный ресурс в часах
+* `failure\\\_within\\\_24h` — отказ в течение 24 часов (0/1)
+* `failure\\\_type` — тип отказа (none, hydraulic, bearing, electrical, motor\_overheat)
+* `estimated\\\_repair\\\_cost` — оценка стоимости ремонта
 
 ## Установка и запуск
 
 1. Клонируйте репозиторий:
+
 ```
    git clone https://github.com/FStrike376/Industrial-Dataset.git
    cd Industrial-Dataset
 ```
+
 2. Создайте виртуальное окружение и активируйте его:
+
 ```
    python -m venv .venv
 ```
-   Windows:
+
+Windows:
+
 ```
-   .venv\Scripts\activate
+   .venv\\\\Scripts\\\\activate
 ```
-   Linux/macOS:
+
+Linux/macOS:
+
 ```
    source .venv/bin/activate
 ```
+
 3. Установите зависимости:
+
 ```
    pip install -r requirements.txt
 ```
+
 4. Запустите скрипт, передав путь к CSV-файлу аргументом:
+
 ```
-   python data_loader.py
+   python data\\\_loader.py
 ```
+
+
+
+## Анализ данных
+
+Основной анализ находится в ноутбуке `EDA.ipynb`. В нём используются pandas и Plotly Express; графики настроены на PNG-рендеринг для отображения в GitHub. Для интерактивного просмотра локально можно временно переключить `pio.renderers.default` на `browser`.
+
