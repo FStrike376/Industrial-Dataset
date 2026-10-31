@@ -10,64 +10,76 @@
 
 ## Описание признаков
 
-* `timestamp` — временная метка
-* `machine\\\_id` — идентификатор станка
-* `machine\\\_type` — тип оборудования (CNC, Pump, Compressor)
-* `vibration\\\_rms` — среднеквадратичная вибрация
-* `temperature\\\_motor` — температура двигателя
-* `current\\\_phase\\\_avg` — средний ток фазы
-* `pressure\\\_level` — уровень давления
-* `rpm` — обороты в минуту
-* `operating\\\_mode` — режим работы (idle, normal, peak)
-* `hours\\\_since\\\_maintenance` — часы с последнего обслуживания
-* `ambient\\\_temp` — температура окружающей среды
-* `rul\\\_hours` — остаточный ресурс в часах
-* `failure\\\_within\\\_24h` — отказ в течение 24 часов (0/1)
-* `failure\\\_type` — тип отказа (none, hydraulic, bearing, electrical, motor\_overheat)
-* `estimated\\\_repair\\\_cost` — оценка стоимости ремонта
+- `timestamp` — временная метка
+- `machine_id` — идентификатор станка
+- `machine_type` — тип оборудования (CNC, Pump, Compressor)
+- `vibration_rms` — среднеквадратичная вибрация
+- `temperature_motor` — температура двигателя
+- `current_phase_avg` — средний ток фазы
+- `pressure_level` — уровень давления
+- `rpm` — обороты в минуту
+- `operating_mode` — режим работы (idle, normal, peak)
+- `hours_since_maintenance` — часы с последнего обслуживания
+- `ambient_temp` — температура окружающей среды
+- `rul_hours` — остаточный ресурс в часах
+- `failure_within_24h` — отказ в течение 24 часов (0/1)
+- `failure_type` — тип отказа (none, hydraulic, bearing, electrical, motor_overheat)
+- `estimated_repair_cost` — оценка стоимости ремонта
 
 ## Установка и запуск
 
 1. Клонируйте репозиторий:
 
-```
+   ```bash
    git clone https://github.com/FStrike376/Industrial-Dataset.git
    cd Industrial-Dataset
-```
+   ```
 
-2. Создайте виртуальное окружение и активируйте его:
+2. Создайте виртуальное окружение:
 
-```
+   ```bash
    python -m venv .venv
-```
+   ```
 
-Windows:
+3. Активируйте окружение.
 
-```
-   .venv\\\\Scripts\\\\activate
-```
+   **Windows (PowerShell):**
 
-Linux/macOS:
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
 
-```
+   **Windows (cmd):**
+
+   ```cmd
+   .venv\Scripts\activate.bat
+   ```
+
+   **Linux/macOS:**
+
+   ```bash
    source .venv/bin/activate
-```
+   ```
 
-3. Установите зависимости:
+4. Установите зависимости:
 
-```
+   ```bash
    pip install -r requirements.txt
-```
+   ```
 
-4. Запустите скрипт, передав путь к CSV-файлу аргументом:
+5. Загрузите датасет и запустите скрипт загрузчика:
 
-```
-   python data\\\_loader.py
-```
-
-
+   ```bash
+   python data_loader.py
+   ```
 
 ## Анализ данных
 
-Основной анализ находится в ноутбуке `EDA.ipynb`. В нём используются pandas и Plotly Express; графики настроены на PNG-рендеринг для отображения в GitHub. Для интерактивного просмотра локально можно временно переключить `pio.renderers.default` на `browser`.
+Основной анализ находится в ноутбуке `notebooks/EDA.ipynb`. В нём представлены восемь разделов исходного EDA и дополнительный раздел 9 «Продвинутая визуализация (Plotly)».
 
+Для PNG-рендеринга графиков используется Plotly с Kaleido и совместимым Chrome. Если PNG-рендерер недоступен, для локального интерактивного просмотра можно временно установить:
+
+```python
+import plotly.io as pio
+pio.renderers.default = "browser"
+```
