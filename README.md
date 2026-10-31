@@ -29,27 +29,57 @@
 ## Установка и запуск
 
 1. Клонируйте репозиторий:
-```
+
+   ```bash
    git clone https://github.com/FStrike376/Industrial-Dataset.git
    cd Industrial-Dataset
-```
-2. Создайте виртуальное окружение и активируйте его:
-```
+   ```
+
+2. Создайте виртуальное окружение:
+
+   ```bash
    python -m venv .venv
-```
-   Windows:
-```
-   .venv\Scripts\activate
-```
-   Linux/macOS:
-```
+   ```
+
+3. Активируйте окружение.
+
+   **Windows (PowerShell):**
+
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
+
+   **Windows (cmd):**
+
+   ```cmd
+   .venv\Scripts\activate.bat
+   ```
+
+   **Linux/macOS:**
+
+   ```bash
    source .venv/bin/activate
-```
-3. Установите зависимости:
-```
+   ```
+
+4. Установите зависимости:
+
+   ```bash
    pip install -r requirements.txt
-```
-4. Запустите скрипт, передав путь к CSV-файлу аргументом:
-```
+   ```
+
+5. Загрузите датасет и запустите скрипт загрузчика:
+
+   ```bash
    python data_loader.py
+   ```
+
+## Анализ данных
+
+Основной анализ находится в ноутбуке `notebooks/EDA.ipynb`. В нём представлены восемь разделов исходного EDA и дополнительный раздел 9 «Продвинутая визуализация (Plotly)».
+
+В ноутбуке по умолчанию установлен статический рендерер `"png"` (в первой ячейке с импортами: `pio.renderers.default = "png"`), что требует установленного пакета Kaleido и совместимого браузера Chrome/Chromium. Для интерактивного просмотра графиков поменяйте значение `pio.renderers.default` в ячейке с импортами на `"plotly_mimetype"` (для Jupyter/VS Code) или `"browser"` (для открытия в отдельной вкладке браузера):
+
+```python
+import plotly.io as pio
+pio.renderers.default = "plotly_mimetype"  # или "browser"
 ```
