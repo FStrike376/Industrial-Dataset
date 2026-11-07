@@ -130,3 +130,4 @@ python scripts/write_to_db.py
 ### Результат
 
 В удалённую базу данных PostgreSQL успешно загружено 100 строк с 15 столбцами в таблицу `akhmetkhanovar`.
+
