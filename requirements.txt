@@ -7,3 +7,5 @@ plotly>=6.0
 kaleido>=1.0.0
 nbformat>=4.2.0
 ipython>=8.0
+python-dotenv>=1.0
+psycopg2-binary>=2.9
