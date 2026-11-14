@@ -1,19 +1,26 @@
 import argparse
+import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from etl.extract import extract
+from etl.load import load
 from etl.transform import transform
 from etl.validate import validate
-from etl.load import load
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
-def main():
+
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Industrial Dataset ETL pipeline"
     )
@@ -64,21 +71,17 @@ def main():
             f"В .env отсутствуют настройки: {missing}"
         )
 
-    print("ETL: Extract")
-
+    logger.info("ETL: Extract")
     df = extract(args.source)
-    print(f"Получено строк: {len(df)}")
+    logger.info("Получено строк: %d", len(df))
 
-    print("\nETL: Transform")
-
+    logger.info("ETL: Transform")
     df = transform(df)
 
-    print("\nETL: Validate")
-
+    logger.info("ETL: Validate")
     validate(df)
 
-    print("\nETL: Load")
-
+    logger.info("ETL: Load")
     df = df.head(args.limit).copy()
 
     count = load(df, args.table)
@@ -88,7 +91,7 @@ def main():
             f"Ожидалось {len(df)} строк, загружено {count}"
         )
 
-    print("\nETL pipeline завершён успешно!")
+    logger.info("ETL pipeline завершён успешно!")
 
 
 if __name__ == "__main__":

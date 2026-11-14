@@ -1,5 +1,12 @@
 import pandas as pd
 
+from etl.validate import (
+    CATEGORY_COLUMNS,
+    FLOAT_COLUMNS,
+    INTEGER_COLUMNS,
+    TARGET_COLUMN,
+)
+
 
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     """Clean and transform the source dataset."""
@@ -11,50 +18,26 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         errors="coerce",
     )
 
-    float_columns = [
-        "vibration_rms",
-        "temperature_motor",
-        "current_phase_avg",
-        "pressure_level",
-        "rpm",
-        "hours_since_maintenance",
-        "ambient_temp",
-        "rul_hours",
-    ]
-
-    for column in float_columns:
+    for column in FLOAT_COLUMNS:
         df[column] = pd.to_numeric(
             df[column],
             errors="coerce",
         )
 
-    integer_columns = [
-        "machine_id",
-        "estimated_repair_cost",
-    ]
-
-    for column in integer_columns:
+    for column in INTEGER_COLUMNS:
         df[column] = pd.to_numeric(
             df[column],
             errors="coerce",
         ).astype("Int64")
 
-    df["failure_within_24h"] = (
-        pd.to_numeric(
-            df["failure_within_24h"],
-            errors="coerce",
-        )
-        .fillna(0)
-        .astype("int8")
+    df[TARGET_COLUMN] = pd.to_numeric(
+        df[TARGET_COLUMN],
+        errors="coerce",
     )
+    df = df.dropna(subset=[TARGET_COLUMN]).copy()
+    df[TARGET_COLUMN] = df[TARGET_COLUMN].astype("int8")
 
-    category_columns = [
-        "machine_type",
-        "operating_mode",
-        "failure_type",
-    ]
-
-    for column in category_columns:
+    for column in CATEGORY_COLUMNS:
         df[column] = df[column].astype("category")
 
     return df
