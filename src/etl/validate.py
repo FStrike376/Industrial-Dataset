@@ -5,12 +5,28 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-FLOAT_COLUMNS = [
+SENSOR_COLUMNS = [
     "vibration_rms",
     "temperature_motor",
     "current_phase_avg",
     "pressure_level",
     "rpm",
+]
+
+NON_NULL_COLUMNS = [
+    "timestamp",
+    "machine_id",
+    "machine_type",
+    "operating_mode",
+    "hours_since_maintenance",
+    "ambient_temp",
+    "rul_hours",
+    "failure_within_24h",
+    "failure_type",
+    "estimated_repair_cost",
+]
+
+FLOAT_COLUMNS = SENSOR_COLUMNS + [
     "hours_since_maintenance",
     "ambient_temp",
     "rul_hours",
@@ -37,6 +53,7 @@ REQUIRED_COLUMNS = set(
 )
 
 MAX_RPM = 100_000
+MAX_SENSOR_MISSING_RATIO = 0.20
 
 
 def validate(df: pd.DataFrame) -> None:
@@ -52,26 +69,36 @@ def validate(df: pd.DataFrame) -> None:
     if df.empty:
         raise ValueError("Датасет пустой.")
 
-    if df["timestamp"].isna().any():
-        raise ValueError("Обнаружены некорректные даты.")
+    # Служебные и целевые колонки не должны содержать пропусков (NaN/NaT)
+    for col in NON_NULL_COLUMNS:
+        if df[col].isna().any():
+            raise ValueError(
+                f"Обнаружены недопустимые пропуски или некорректные значения в столбце '{col}'."
+            )
 
-    if df["machine_id"].isna().any():
-        raise ValueError("Обнаружены пустые идентификаторы станков.")
-
-    if df[TARGET_COLUMN].isna().any():
-        raise ValueError("Обнаружены пропуски в целевой переменной failure_within_24h.")
+    # В сенсорных колонках допустима небольшая доля пропусков (потеря пакетов IoT до 20%)
+    for col in SENSOR_COLUMNS:
+        missing_ratio = df[col].isna().mean()
+        if missing_ratio > MAX_SENSOR_MISSING_RATIO:
+            raise ValueError(
+                f"Доля пропусков в сенсоре '{col}' ({missing_ratio:.1%}) превышает порог {MAX_SENSOR_MISSING_RATIO:.0%}."
+            )
 
     if not df[TARGET_COLUMN].isin([0, 1]).all():
-        raise ValueError("Целевая переменная должна содержать 0 или 1.")
+        raise ValueError("Целевая переменная должна содержать только 0 или 1.")
 
-    if (df["rul_hours"].dropna() < 0).any():
+    if (df["rul_hours"] < 0).any():
         raise ValueError("Обнаружены отрицательные значения остаточного ресурса (rul_hours < 0).")
 
-    if (df["estimated_repair_cost"].dropna() < 0).any():
+    if (df["estimated_repair_cost"] < 0).any():
         raise ValueError("Обнаружена отрицательная стоимость ремонта (estimated_repair_cost < 0).")
 
-    rpm_series = df["rpm"].dropna()
-    if ((rpm_series < 0) | (rpm_series > MAX_RPM)).any():
+    if (df["hours_since_maintenance"] < 0).any():
+        raise ValueError("Обнаружены отрицательные значения hours_since_maintenance.")
+
+    # Для rpm проверяем только непустые значения (так как rpm — сенсор с допустимыми пропусками ~2.2%)
+    rpm_valid = df["rpm"].dropna()
+    if ((rpm_valid < 0) | (rpm_valid > MAX_RPM)).any():
         raise ValueError(f"Значения оборотов (rpm) выходят за допустимые пределы [0, {MAX_RPM}].")
 
     logger.info("Валидация пройдена успешно.")

@@ -2,15 +2,14 @@ import os
 import sys
 from pathlib import Path
 
-import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from sqlalchemy import text
 
 
 # Пути проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE_DIR))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 from data_loader import (
     LOCAL_FILE_NAME,
@@ -19,24 +18,11 @@ from data_loader import (
     download_file,
     load_data,
 )
+from etl.load import get_engine
 
 # Настройки
 TABLE_NAME = "akhmetkhanovar"
 ROWS_TO_UPLOAD = 100
-
-
-def get_engine():
-    """Create a SQLAlchemy engine from environment variables."""
-
-    connection_url = URL.create(
-        drivername="postgresql+psycopg2",
-        username=os.getenv("HOMEWORK_USER"),
-        password=os.getenv("HOMEWORK_PASSWORD"),
-        host=os.getenv("HOMEWORK_HOST"),
-        port=int(os.getenv("HOMEWORK_PORT", "5432")),
-        database=os.getenv("HOMEWORK_DB"),
-    )
-    return create_engine(connection_url, connect_args={"connect_timeout": 10})
 
 
 def main() -> None:
@@ -83,12 +69,13 @@ def main() -> None:
                 chunksize=ROWS_TO_UPLOAD,
             )
 
-            df_loaded = pd.read_sql_table(TABLE_NAME, con=connection)
-            count = len(df_loaded)
+            count = connection.execute(
+                text(f'SELECT COUNT(*) FROM "{TABLE_NAME}"')
+            ).scalar_one()
 
-        print("\nЗагрузка и проверка чтения завершены успешно!")
+        print("\nЗагрузка завершена успешно!")
         print(f"Таблица: {TABLE_NAME}")
-        print(f"Прочитано строк из БД через pd.read_sql_table: {count}")
+        print(f"Записано строк: {count}")
 
         if count != ROWS_TO_UPLOAD:
             raise RuntimeError(

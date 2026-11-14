@@ -30,12 +30,11 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
             errors="coerce",
         ).astype("Int64")
 
+    # Используем nullable Int8 без dropna/fillna, чтобы validate() явно проверил отсутствие пропусков в таргете
     df[TARGET_COLUMN] = pd.to_numeric(
         df[TARGET_COLUMN],
         errors="coerce",
-    )
-    df = df.dropna(subset=[TARGET_COLUMN]).copy()
-    df[TARGET_COLUMN] = df[TARGET_COLUMN].astype("int8")
+    ).astype("Int8")
 
     for column in CATEGORY_COLUMNS:
         df[column] = df[column].astype("category")
